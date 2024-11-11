@@ -12,6 +12,7 @@ We'll first read in our libraries and our dataset of interest
 library(tidyverse)
 library(tidymodels)
 library(parsnip)
+library(lubridate)
 
 bike_data <- read_csv(file='data/SeoulBikeData.csv',show_col_types=FALSE)
 head(bike_data)
@@ -60,5 +61,71 @@ catColsInterest
 
 numMins <- lapply(numColsInterest,min)
 str(numMins)
+```
+We want a series of transformations and renamings. We want the `Date` column in a data format. We want `Seasons`,`Holiday`,`Functioning Day` as factors. We also want to rename all of our columns so they're easier to work with using camel_case format.
+
+We can see everything reflected in our structure output.
+
+```{r}
+bike_data <- bike_data %>%
+  mutate(Date = dmy(Date),
+         Seasons = as.factor(Seasons),
+         Holiday = as.factor(Holiday),
+         `Functioning Day` = as.factor(`Functioning Day`)
+         ) %>%
+  rename(date = Date,
+         rented_bike_count = `Rented Bike Count`,
+         hour = Hour,
+         temperature_c = `Temperature(C)`,
+         humidity_perc = `Humidity(%)`,
+         wind_speed_ms = `Wind speed (m/s)`,
+         visibility = `Visibility (10m)`,
+         dew_temp = `Dew point temperature(C)`,
+         solar_radiation = `Solar Radiation (MJ/m2)`,
+         rainfall_mm = `Rainfall(mm)`,
+         snowfall_cm = `Snowfall (cm)`,
+         season = Seasons,
+         holiday = Holiday,
+         func_day = `Functioning Day`
+         )
+
+str(bike_data)
+```
+We want to create some summary statistics. We want to look our our `rented_bike_count` across our categorical variables `season`, `holiday` and `func_day`.
+
+One major thing that stands out is ______.
+
+```{r}
+bike_summaries <- list(general=NULL, season = NULL, holiday = NULL, func_day = NULL)
+
+summarizeNumeric <- function(data,catVar){
+  catSym <- sym(catVar)
+  summary_data <- bike_data %>%
+    select(rented_bike_count,!!catSym) %>%
+    group_by(!!catSym) %>%
+    summarize(across(everything(), .fns = list("mean" = mean,
+                                                 "median" = median,
+                                                 "var" = var,
+                                                 "sd" = sd,
+                                                 "IQR" = IQR), .names = "{.fn}_{.col}"))
+  return(summary_data)
+}
+
+
+bike_summaries$season <- summarizeNumeric(bike_data,"season")
+bike_summaries$holiday <- summarizeNumeric(bike_data,"holiday")
+bike_summaries$func_day <- summarizeNumeric(bike_data,"func_day")
+
+bike_summaries$general <- bike_data %>%
+  select(rented_bike_count) %>%
+  summarize(across(everything(), .fns = list("mean" = mean,
+                                                 "median" = median,
+                                                 "var" = var,
+                                                 "sd" = sd,
+                                                 "IQR" = IQR), .names = "{.fn}_{.col}"))
+
+bike_summaries
+
+
 ```
 
