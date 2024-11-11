@@ -1,0 +1,64 @@
+---
+title: "Modeling For Data Science"
+format: html
+editor: visual
+---
+
+## Reading in Libraries and our data
+
+We'll first read in our libraries and our dataset of interest
+
+```{r}
+library(tidyverse)
+library(tidymodels)
+library(parsnip)
+
+bike_data <- read_csv(file='data/SeoulBikeData.csv',show_col_types=FALSE)
+head(bike_data)
+```
+
+## Exploratory Data Ananlyses
+
+Before building our models, we want to get familiar with our data and perform some non-transformative data transformations if needed.
+
+Lets check for the missing values in our data...The good news is there are no missing values!
+
+```{r}
+colSums(is.na(bike_data))
+```
+
+Lets check the column types to make sure they make sense along with some sample values. A few things we notice:
+
+1.  Date is read in as `character` type. We will want to update this to numeric or date type
+2.  There are four Seasons. Winter, Sprint, Fall and Summer.
+3.  Holiday and Functioning Day attributes could be used as boolean if needed. They only hold 2 values
+
+```{r}
+str(bike_data)
+```
+Diving a level further, lets make sure all of our numeric columns where we should only expect values greater than zero follow that pattern. We will also want to make sure our assumption on values for Seasons, Holiday and Functioning Day hold true.
+
+Everything seems to look good per the output below
+
+```{r}
+numColsInterest <- list(rented_bike <- bike_data$`Rented Bike Count`,
+                        hour <- bike_data$Hour,
+                        humid <- bike_data$`Humidity(%)`,
+                        wind <- bike_data$`Wind speed (m/s)`,
+                        vis <- bike_data$`Visibility (10m)`,
+                        solar <- bike_data$`Solar Radiation (MJ/m2)`,
+                        rain <- bike_data$`Rainfall(mm)`,
+                        snow <- bike_data$`Snowfall (cm)`
+                        
+)
+
+catColsInterest <- list(seasons_unique = unique(bike_data$Seasons),
+                        holiday_unique = unique(bike_data$Holiday),
+                        day_unique = unique(bike_data$`Functioning Day`))
+
+catColsInterest
+
+numMins <- lapply(numColsInterest,min)
+str(numMins)
+```
+
