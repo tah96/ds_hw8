@@ -234,3 +234,19 @@ numeric_vars <- agg_bike_data %>%
 cor(numeric_vars)
 
 ```
+## Modeling
+
+Now that we've done some exploratory analysis, lets get started on our model creation. First we'll split our data in test and training sets (seasons as strata). We'll also split our training set in folds for cross-validation.
+
+We can see our split is 75/25 (training/testing) and that there are 10 folds in our training set in the output below.
+
+```{r}
+bike_split <- initial_split(agg_bike_data,prop=0.75,strata=season)
+bike_train <- vfold_cv(training(bike_split),10)
+bike_test <- testing(bike_split)
+
+bike_split
+bike_train
+
+```
+
