@@ -242,11 +242,84 @@ We can see our split is 75/25 (training/testing) and that there are 10 folds in 
 
 ```{r}
 bike_split <- initial_split(agg_bike_data,prop=0.75,strata=season)
-bike_train <- vfold_cv(training(bike_split),10)
+bike_train <- training(bike_split)
 bike_test <- testing(bike_split)
+bike_train_10_fold <- vfold_cv(bike_train,10)
 
 bike_split
-bike_train
+bike_train_10_fold
+```
+Construct recipes
 
+```{r}
+recipe_1 <- recipe(rented_bike_count ~ ., data = bike_train) |>
+  update_role(date, new_role = "ID") |>
+  step_date(date,features=c("dow")) |>
+  step_mutate(date_dow = factor(date_dow,levels=unique(date_dow),labels=if_else(unique(date_dow) %in% c('Mon','Tue','Wed','Thu'),"Weekday","Weekend"))) |>
+  step_normalize(all_numeric(), -all_outcomes()) |>
+  step_dummy(season,holiday,date_dow)
+
+recipe_2 <- recipe_1 |>
+  step_interact(terms = ~ starts_with("season"):starts_with("holiday") + 
+                  starts_with("season"):avg_temp_c +
+                  avg_temp_c:total_rainfall_mm)
+
+recipe_3 <- recipe_2 #|>
+  #step_poly(all_numeric(), degree = 2,keep_original_cols = FALSE)
+  
+```
+Now that we've got our recipe, lets set up a linear regression model and use the "lm" engine
+
+```{r}
+bike_mod <- linear_reg() %>%
+  set_engine("lm")
+
+bike_mod
+```
+We'll use our 10 fold CV training set in our models with each recipe. Before doing this we need to create our individual workflows to collect metrics. 
+
+Looking at our CV error (2 for each), we see that _____ is our best model!
+
+```{r}
+bike_wfl_1 <- workflow() |>
+  add_recipe(recipe_1) |>
+  add_model(bike_mod)
+  
+bike_fit_1 <- bike_wfl_1 |>
+  fit_resamples(bike_train_10_fold)
+
+bike_wfl_2 <- workflow() |>
+  add_recipe(recipe_2) |>
+  add_model(bike_mod)
+
+bike_fit_2 <- bike_wfl_2 |>
+  fit_resamples(bike_train_10_fold)
+
+bike_wfl_3 <- workflow() |>
+  add_recipe(recipe_3) |>
+  add_model(bike_mod)
+
+bike_fit_3 <- bike_wfl_3 |>
+  fit_resamples(bike_train_10_fold)
+
+rbind(bike_fit_1 |> collect_metrics(),bike_fit_2 |> collect_metrics(),bike_fit_3 |> collect_metrics())
+```
+Since _____ is our best model, we want to keep this, evaluate against our entire training set and test against our test set.
+
+Our RMSE evaluated against our test data is _______. We can also see our coefficients from the fitted model in the second output module.
+
+
+```{r}
+test_metrics <- bike_wfl_2 |>
+  last_fit(bike_split) |>
+  collect_metrics()
+
+final_model <- bike_wfl_2 |>
+  fit(bike_train) |>
+  extract_fit_parsnip() |>
+  tidy()
+
+test_metrics
+final_model
 ```
 
