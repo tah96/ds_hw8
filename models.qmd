@@ -300,7 +300,7 @@ bike_mod
 ```
 We'll use our 10 fold CV training set in our models with each recipe. Before doing this we need to create our individual workflows to collect metrics. 
 
-Looking at our CV error (2 for each), we see that our third model (interactions & polynomials) is our best model with the lowest RMSE of ~2959!
+Looking at our CV error (2 for each), we see that our third model (interactions & polynomials) is our best model with the lowest RMSE!
 
 ```{r}
 bike_wfl_1 <- workflow() |>
@@ -328,7 +328,7 @@ rbind(bike_fit_1 |> collect_metrics(),bike_fit_2 |> collect_metrics(),bike_fit_3
 ```
 Since our interaction and polynomial model is our best model, we want to keep this, evaluate against our entire training set and test against our test set.
 
-Our RMSE evaluated against our test data is ~2859. We can also see our coefficients from the fitted model in the second output module.
+Our RMSE evaluated against our test data can be seen in the first output module. We can also see our coefficients from the fitted model in the second output module.
 
 
 ```{r}
